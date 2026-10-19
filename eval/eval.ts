@@ -51,15 +51,21 @@ interface Turn {
   held: boolean
   ms: number
 }
-type Step = string | { event: 'session.end' | 'session.compact' }
+type Step = string | { event: 'session.end' | 'session.compact' | 'reload' } | { router: 'on' | 'off' }
 
 async function converse(steps: Step[]): Promise<Turn[]> {
-  const handlers: Record<string, any> = {}
-  register((event: string, fn: unknown) => (handlers[event] = fn), options)
+  let handlers: Record<string, any> = {}
+  const load = () => {
+    handlers = {}
+    register((event: string, a: unknown, b?: unknown) => (handlers[event] = b ?? a), options)
+  }
+  load()
 
   const responses: Record<number, string> = {}
   let submitted = 0
   let aborted = false
+  const state = new Map<string, unknown>()
+  const store = new Map<string, unknown>()
   const $ = {
     ui: { log() {}, toast() {}, status() {} },
     clock: {
@@ -79,6 +85,13 @@ async function converse(steps: Step[]): Promise<Turn[]> {
       },
     },
     turn: { abort: async () => void (aborted = true) },
+    // Host-held values: a reload keeps them, as the engine does.
+    state: {
+      get: async (ref: { key: string }) => ({ value: state.get(ref.key), version: 0 }),
+      set: async (ref: { key: string }, value: unknown) => void state.set(ref.key, value),
+    },
+    store: { get: async (key: string) => store.get(key), set: async (key: string, value: unknown) => void store.set(key, value) },
+    command: { register: async () => {} },
     model: { classify: async () => null },
   }
   const pass = async (e: unknown) => e
@@ -87,9 +100,14 @@ async function converse(steps: Step[]): Promise<Turn[]> {
   }
 
   const turns: Turn[] = []
+  await handlers['session.start']($, {}, pass)
   for (const step of steps) {
     if (typeof step !== 'string') {
-      await handlers[step.event]($, {}, pass)
+      if ('router' in step) await handlers['command.run']($, { args: step.router })
+      else if (step.event === 'reload') {
+        load()
+        await handlers['session.start']($, {}, pass)
+      } else await handlers[step.event]($, {}, pass)
       continue
     }
     const n = ++submitted
@@ -212,6 +230,16 @@ const SCENARIOS: Array<{
     name: 'session.compact re-picks the model',
     steps: [MIGRATION, { event: 'session.compact' }, 'Run git status and tell me what changed.'],
     checks: t => [check('model is picked again after compaction', t[1]!.model !== t[0]!.model)],
+  },
+  {
+    name: 'mod reloaded mid-chat: model stays put',
+    steps: [MIGRATION, { event: 'reload' }, 'Run git status and tell me what changed.'],
+    checks: t => [check('model kept after the reload', t[1]!.model === t[0]!.model)],
+  },
+  {
+    name: '/router on mid-chat: model stays put',
+    steps: [{ router: 'off' }, 'Show me the last 5 commits.', { router: 'on' }, 'Run git status and tell me what changed.'],
+    checks: t => [check('model kept after /router on', t[1]!.model === t[0]!.model)],
   },
   {
     name: 'unrelated prompt is held back, resend runs here',
