@@ -136,8 +136,15 @@ export const register: Register = (on, options) => {
   let stopNextTurn: string[] | undefined
   let off = false
   const statusText = (text?: string) => `Jev router ${off ? 'off' : 'on'}${text ? ` · ${text}` : ''}`
+  // Held by the host so a hot reload mid-chat does not read as a fresh chat and switch the model.
+  const settledRef = { plugin: 'model-router', key: 'settled' } as const
 
   on('session.start', async ($, e, next) => {
+    const { value } = await $.state.get(settledRef)
+    if (value) {
+      modelSettled = value.modelSettled
+      sessionModel = value.sessionModel ?? undefined
+    }
     off = (await $.store.get('off')) === true
     $.ui.status(statusText())
     await $.command.register({ name: 'router', description: 'Turn the Jev model router on or off: /router on|off' })
@@ -153,17 +160,19 @@ export const register: Register = (on, options) => {
     return { text: `Jev model router is ${off ? 'off' : 'on'}.` }
   })
 
-  on('session.end', ($, e, next) => {
+  on('session.end', async ($, e, next) => {
     modelSettled = false
     sessionModel = undefined
+    await $.state.set(settledRef, { modelSettled, sessionModel: sessionModel ?? null })
     earlier = []
     held = undefined
     stopNextTurn = undefined
     return next(e)
   })
-  on('session.compact', ($, e, next) => {
+  on('session.compact', async ($, e, next) => {
     modelSettled = false
     sessionModel = undefined
+    await $.state.set(settledRef, { modelSettled, sessionModel: sessionModel ?? null })
     return next(e)
   })
 
@@ -287,7 +296,15 @@ export const register: Register = (on, options) => {
   })
 
   on('turn.step', async function* ($, e, next) {
-    if (off || !routeMainLoop || e.agentId) return yield* next(e)
+    if (e.agentId) return yield* next(e)
+    // A turn that ran with the router off still started the chat, so `/router on` later must not switch.
+    if (off || !routeMainLoop) {
+      if (!modelSettled) {
+        modelSettled = true
+        await $.state.set(settledRef, { modelSettled, sessionModel: sessionModel ?? null })
+      }
+      return yield* next(e)
+    }
 
     // Every request after the first reuses what the turn settled on, so
     // neither the model nor the effort changes under its own tool loop.
@@ -303,7 +320,10 @@ export const register: Register = (on, options) => {
     if (routeMainModel && routing.model && !modelSettled) sessionModel = requestModelId(routing.model)
     if (routeMainModel && sessionModel && sessionModel !== e.model) change.model = sessionModel
     const keptMidway = routeMainModel && routing.model && modelSettled
-    modelSettled = true
+    if (!modelSettled) {
+      modelSettled = true
+      await $.state.set(settledRef, { modelSettled, sessionModel: sessionModel ?? null })
+    }
     if (routeMainEffort && routing.effort) change.effort = routing.effort
 
     appliedTurnId = e.turnId
