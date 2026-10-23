@@ -325,9 +325,13 @@ export const register: Register = (on, options) => {
     }
     if (routeMainEffort && routing.effort) change.effort = routing.effort
 
+    const effectiveEffort = change.effort ?? e.effort
+    if ((change.model ?? e.model) === 'claude-opus-5-5' && (effectiveEffort === 'xhigh' || effectiveEffort === 'max')) {
+      change.effort = 'high'
+    }
+
     appliedTurnId = e.turnId
     applied = Object.keys(change).length > 0 ? change : null
-    // A row in the transcript scrolls away; this line stays on screen.
 
     if (!applied) {
       // A turn left alone is the common case, and it used to be silent, which
