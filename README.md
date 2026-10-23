@@ -50,7 +50,7 @@ With no key, the mod falls back to Claude Code's built-in classifier (Haiku). It
 [Jev Model Router] main loop → claude-haiku-5-5, effort low: fast (confidence 0.99)
 ```
 
-The status line under the prompt reads like `Haiku 5.5 · low effort · fast 99%`.
+The mod adds no row under the prompt. It publishes whether it is on or off as `$.state` `model-router.off`, so another mod can show it.
 
 `/model` and the model's own answer will keep naming your session model. The mod changes each request, not the setting. To see which model really answered, check the session log:
 
