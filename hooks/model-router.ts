@@ -140,15 +140,15 @@ export const register: Register = (on, options) => {
   const settledRef = { plugin: 'model-router', key: 'settled' } as const
 
   on('session.start', async ($, e, next) => {
+    const started = await next(e)
     const { value } = await $.state.get(settledRef)
     if (value) {
       modelSettled = value.modelSettled
       sessionModel = value.sessionModel ?? undefined
     }
     off = (await $.store.get('off')) === true
-    $.ui.status(statusText())
-    await $.command.register({ name: 'router', description: 'Turn the Jev model router on or off: /router on|off' })
-    return next(e)
+    await $.command.register({ name: 'router', description: 'Turn the Jev model router on or off: /router on|off', argumentHint: '[on | off]', immediate: true })
+    return started
   })
   on('command.run', { command: 'router' }, async ($, e) => {
     const arg = e.args.trim().toLowerCase()
