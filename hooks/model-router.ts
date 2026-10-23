@@ -47,7 +47,6 @@ import {
   DEFAULT_MODEL,
   describeDecision,
   describeSetup,
-  describeStatus,
   endpoint,
   pendingDecisions,
   readDecision,
@@ -135,27 +134,28 @@ export const register: Register = (on, options) => {
   let held: string | undefined
   let stopNextTurn: string[] | undefined
   let off = false
-  const statusText = (text?: string) => `Jev router ${off ? 'off' : 'on'}${text ? ` · ${text}` : ''}`
   // Held by the host so a hot reload mid-chat does not read as a fresh chat and switch the model.
   const settledRef = { plugin: 'model-router', key: 'settled' } as const
+  const offRef = { plugin: 'model-router', key: 'off' } as const
 
   on('session.start', async ($, e, next) => {
+    const started = await next(e)
     const { value } = await $.state.get(settledRef)
     if (value) {
       modelSettled = value.modelSettled
       sessionModel = value.sessionModel ?? undefined
     }
     off = (await $.store.get('off')) === true
-    $.ui.status(statusText())
-    await $.command.register({ name: 'router', description: 'Turn the Jev model router on or off: /router on|off' })
-    return next(e)
+    await $.state.set(offRef, off)
+    await $.command.register({ name: 'router', description: 'Turn the Jev model router on or off: /router on|off', argumentHint: '[on | off]', immediate: true })
+    return started
   })
   on('command.run', { command: 'router' }, async ($, e) => {
     const arg = e.args.trim().toLowerCase()
     if (arg === 'on' || arg === 'off') {
       off = arg === 'off'
       await $.store.set('off', off)
-      $.ui.status(statusText())
+      await $.state.set(offRef, off)
     }
     return { text: `Jev model router is ${off ? 'off' : 'on'}.` }
   })
@@ -289,7 +289,6 @@ export const register: Register = (on, options) => {
       stopNextTurn = undefined
       for (const line of advice) $.ui.log(`[Jev Model Router] ${line}`)
       $.ui.toast('Jev: new task. /clear and resend it, or send it again to run it here.', { timeoutMs: 15000 })
-      $.ui.status(statusText(advice[0]))
       await $.turn.abort({ turnId: e.turnId })
     }
     return result
@@ -329,7 +328,6 @@ export const register: Register = (on, options) => {
     appliedTurnId = e.turnId
     applied = Object.keys(change).length > 0 ? change : null
     // A row in the transcript scrolls away; this line stays on screen.
-    if (logDecisions && decision) $.ui.status(statusText(describeStatus(decision, applied, { model: e.model, effort: e.effort })))
 
     if (!applied) {
       // A turn left alone is the common case, and it used to be silent, which
