@@ -34,7 +34,7 @@ Add this to `~/.claude/settings.json` (user settings, not project settings):
 ```json
 {
   "pluginConfigs": {
-    "model-router@skills-dir": {
+    "model-router-slim@skills-dir": {
       "options": { "typesafeApiKey": "…", "timeoutMs": 2000 }
     }
   }
@@ -50,7 +50,7 @@ With no key, the mod falls back to Claude Code's built-in classifier (Haiku). It
 [Jev Model Router] main loop → claude-haiku-5-5, effort low: fast (confidence 0.99)
 ```
 
-The mod adds no row under the prompt. It publishes whether it is on or off as `$.state` `model-router.off`, so another mod can show it.
+The mod adds no row under the prompt. It publishes whether it is on or off as `$.state` `model-router-slim.off`, and the model and effort it last sent as `model-router-slim.sent`, so another mod can show them.
 
 `/model` and the model's own answer will keep naming your session model. The mod changes each request, not the setting. To see which model really answered, check the session log:
 

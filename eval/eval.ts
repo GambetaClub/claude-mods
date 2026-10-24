@@ -31,7 +31,7 @@ const SINCE = argv.includes('--since') ? new Date(arg('since', '')).getTime() : 
 const ONLY = arg('only', 'all')
 
 const settings = JSON.parse(readFileSync(join(homedir(), '.claude/settings.json'), 'utf8'))
-const options: Record<string, unknown> = settings.pluginConfigs?.['model-router@skills-dir']?.options ?? {}
+const options: Record<string, unknown> = (settings.pluginConfigs?.['model-router-slim@skills-dir'] ?? settings.pluginConfigs?.['model-router-slim@local-mods'])?.options ?? {}
 const BASE = { model: requestModelId(settings.model ?? 'opus'), effort: settings.effortLevel ?? 'low' }
 const TIERS = {
   fast: 'haiku',

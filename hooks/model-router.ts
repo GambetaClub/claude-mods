@@ -47,6 +47,7 @@ import {
   DEFAULT_MODEL,
   describeDecision,
   describeSetup,
+  describeStatus,
   endpoint,
   pendingDecisions,
   readDecision,
@@ -136,8 +137,9 @@ export const register: Register = (on, options) => {
   let off = false
   const SHORT_FOLLOW_UP = 30
   // Held by the host so a hot reload mid-chat does not read as a fresh chat and switch the model.
-  const settledRef = { plugin: 'model-router', key: 'settled' } as const
-  const offRef = { plugin: 'model-router', key: 'off' } as const
+  const settledRef = { plugin: 'model-router-slim', key: 'settled' } as const
+  const offRef = { plugin: 'model-router-slim', key: 'off' } as const
+  const sentRef = { plugin: 'model-router-slim', key: 'sent' } as const
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
@@ -303,19 +305,23 @@ export const register: Register = (on, options) => {
 
   on('turn.step', async function* ($, e, next) {
     if (e.agentId) return yield* next(e)
+    const send = async function* (step: typeof e) {
+      await $.state.set(sentRef, { model: step.model, effort: step.effort === undefined ? null : String(step.effort) })
+      return yield* next(step)
+    }
     // A turn that ran with the router off still started the chat, so `/router on` later must not switch.
     if (off || !routeMainLoop) {
       if (!modelSettled) {
         modelSettled = true
         await $.state.set(settledRef, { modelSettled, sessionModel: sessionModel ?? null })
       }
-      return yield* next(e)
+      return yield* send(e)
     }
 
     // Every request after the first reuses what the turn settled on, so
     // neither the model nor the effort changes under its own tool loop.
     if (e.index > 0 && e.turnId === appliedTurnId) {
-      return yield* next(applied ? { ...e, ...applied } : e)
+      return yield* send(applied ? { ...e, ...applied } : e)
     }
 
     const decision = pending.take()
@@ -339,6 +345,7 @@ export const register: Register = (on, options) => {
 
     appliedTurnId = e.turnId
     applied = Object.keys(change).length > 0 ? change : null
+    // A row in the transcript scrolls away; this line stays on screen.
 
     if (!applied) {
       // A turn left alone is the common case, and it used to be silent, which
@@ -352,7 +359,7 @@ export const register: Register = (on, options) => {
               : ''
         $.ui.log(`[Jev Model Router] main loop: ${routing.reason}${suppressed}`)
       }
-      return yield* next(e)
+      return yield* send(e)
     }
     if (logDecisions) {
       const what = [change.model, change.effort && `effort ${change.effort}`]
@@ -360,13 +367,14 @@ export const register: Register = (on, options) => {
         .join(', ')
       $.ui.log(`[Jev Model Router] main loop → ${what}: ${routing.reason}${keptMidway ? ' (model kept mid-conversation)' : ''}`)
     }
-    return yield* next({ ...e, ...change })
+    return yield* send({ ...e, ...change })
   })
 
   on('turn.complete', async ($, e, next) => {
     const result = await next(e)
     if (!off && logDecisions && !e.agentId && e.usage) {
-      $.ui.log(`[Jev Model Router] outcome: ${e.usage.model} · effort ${applied?.effort ?? 'kept'} · ${Math.round(e.durationMs / 1000)}s · ${e.usage.output_tokens} out · ${e.usage.cache_creation_input_tokens} written`)
+      const sent = (await $.state.get(sentRef)).value
+      $.ui.log(`[Jev Model Router] outcome: ${sent?.model ?? e.usage.model} · effort ${sent?.effort ?? 'n/d'} · ${Math.round(e.durationMs / 1000)}s · ${e.usage.output_tokens} out · ${e.usage.cache_creation_input_tokens} written`)
     }
     return result
   })
