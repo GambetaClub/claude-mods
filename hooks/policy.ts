@@ -246,10 +246,11 @@ function confidenceOf(answer: Record<string, unknown>): number | null {
   return values.length > 0 ? Math.max(...values) : null
 }
 
-/** The rubric score (0..3) as a reasoning level. */
+/** The rubric score (0..3) as a level: medium by default, high from 2, xhigh from 2.75. */
 export function effortLevel(score: number): Effort {
-  const index = Math.min(EFFORT_ORDER.length - 1, Math.max(0, Math.round(score)))
-  return EFFORT_ORDER[index] as Effort
+  if (score < 0.3) return 'low'
+  if (score < 2) return 'medium'
+  return score < 2.75 ? 'high' : 'xhigh'
 }
 
 /**
@@ -399,6 +400,10 @@ export function route(
   if (effortScore !== null) {
     const currentRank = effortRank(current.effort)
     let wantedRank = EFFORT_ORDER.indexOf(effortLevel(effortScore))
+
+    // High effort is for planning-heavy (deep tier or above) or sensitive (risky) work; everything else stops at medium.
+    const needsHigh = wantedTier >= TIER_ORDER.indexOf('deep') || (decision.risky ?? 0) > 0.5
+    if (!needsHigh) wantedRank = Math.min(wantedRank, EFFORT_ORDER.indexOf('medium'))
 
     // Risk raises the floor; it must never lower one. Forcing only skips the
     // thresholds, so without this clamp a task already at `xhigh` or `max`

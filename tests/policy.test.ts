@@ -95,7 +95,8 @@ test('a numeric effort is the caller\'s own scale and is left alone', () => {
 
 test('the rubric score maps onto the reasoning ladder', () => {
   expect(effortLevel(0)).toBe('low')
-  expect(effortLevel(0.4)).toBe('low')
+  expect(effortLevel(0.2)).toBe('low')
+  expect(effortLevel(0.4)).toBe('medium')
   expect(effortLevel(1.4)).toBe('medium')
   expect(effortLevel(2.04)).toBe('high')
   expect(effortLevel(3)).toBe('xhigh')
