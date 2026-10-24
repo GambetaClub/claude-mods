@@ -134,6 +134,7 @@ export const register: Register = (on, options) => {
   let held: string | undefined
   let stopNextTurn: string[] | undefined
   let off = false
+  const SHORT_FOLLOW_UP = 30
   // Held by the host so a hot reload mid-chat does not read as a fresh chat and switch the model.
   const settledRef = { plugin: 'model-router', key: 'settled' } as const
   const offRef = { plugin: 'model-router', key: 'off' } as const
@@ -209,6 +210,12 @@ export const register: Register = (on, options) => {
     // previous prompt's decision from reaching it.
     if (bareCommand(e.text)) {
       if (logDecisions) $.ui.log('[Jev Model Router] a command with nothing after it; leaving the turn alone')
+      pending.put(null)
+      return next(e)
+    }
+
+    if (earlier.length > 0 && e.text.trim().length < SHORT_FOLLOW_UP) {
+      if (logDecisions) $.ui.log('[Jev Model Router] short follow-up; keeping the session model and effort')
       pending.put(null)
       return next(e)
     }
@@ -356,6 +363,14 @@ export const register: Register = (on, options) => {
     return yield* next({ ...e, ...change })
   })
 
+  on('turn.complete', async ($, e, next) => {
+    const result = await next(e)
+    if (!off && logDecisions && !e.agentId && e.usage) {
+      $.ui.log(`[Jev Model Router] outcome: ${e.usage.model} · effort ${applied?.effort ?? 'kept'} · ${Math.round(e.durationMs / 1000)}s · ${e.usage.output_tokens} out · ${e.usage.cache_creation_input_tokens} written`)
+    }
+    return result
+  })
+
   on('agent.spawn', async ($, e, next) => {
     if (off) return next(e)
     // Before the routing guards: a module whose switches are all off has still
@@ -379,7 +394,7 @@ export const register: Register = (on, options) => {
     }
 
     // A fork inherits its parent's model; `model` is ignored for it.
-    if (!routeSubagentModel || e.fork) return next(e)
+    if (!routeSubagentModel || e.fork || e.model) return next(e)
 
     if (!unusableReported) {
       unusableReported = true
@@ -430,10 +445,9 @@ export const register: Register = (on, options) => {
       $.ui.log(`[Jev Model Router] jev (${e.subagentType}): ${describeDecision(decision, ms)}`)
     }
 
-    // The subagent's own model wins when the caller named one; otherwise it
-    // would inherit the parent's, so that is what a change is measured from.
+    // The subagent inherits the parent's model, so that is what a change is measured from.
     // The Agent tool takes no effort, so only the model is ours to set here.
-    const current = e.model ?? e.parentModel
+    const current = e.parentModel
     const { model, reason } = route(decision, { model: current }, policy)
     if (!model) {
       if (logDecisions) $.ui.log(`[Jev Model Router] ${e.subagentType}: ${reason}`)
