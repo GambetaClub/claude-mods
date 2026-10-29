@@ -1,9 +1,24 @@
 {
   "name": "claude-mods",
   "owner": { "name": "GambetaClub" },
+  "metadata": {
+    "description": "Claude Code mods: route the model per task, show context and rate-limit bars, keep the prompt cache warm."
+  },
   "plugins": [
-    { "name": "model-router-slim", "source": "./" },
-    { "name": "usage-mode", "source": "./mods/usage-mode" },
-    { "name": "cache-tax-slim", "source": "./mods/cache-tax-slim" }
+    {
+      "name": "model-router-slim",
+      "source": "./",
+      "description": "Picks the model and reasoning effort for every prompt with TypeSafe's Jev."
+    },
+    {
+      "name": "usage-mode",
+      "source": "./mods/usage-mode",
+      "description": "Context window, 5-hour limit and weekly limit as bars under the prompt."
+    },
+    {
+      "name": "cache-tax-slim",
+      "source": "./mods/cache-tax-slim",
+      "description": "Keeps the one-hour prompt cache warm, warns before a cold send, and shows a status band above the prompt."
+    }
   ]
 }

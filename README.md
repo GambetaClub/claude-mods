@@ -20,10 +20,12 @@ At the prompt of a Claude Code session, one line per mod:
 /plugin install cache-tax-slim --marketplace GambetaClub/claude-mods
 ```
 
-From a shell, the same with `claude plugin install …`:
+From a shell, all three at once:
 
 ```sh
-claude plugin install usage-mode --marketplace GambetaClub/claude-mods
+for m in model-router-slim usage-mode cache-tax-slim; do
+  claude plugin install $m --marketplace GambetaClub/claude-mods
+done
 ```
 
 The first install asks you to add the marketplace (`y`), then for a scope. After that, `/reload-plugins` picks up updates.

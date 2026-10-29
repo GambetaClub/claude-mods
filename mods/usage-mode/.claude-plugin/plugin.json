@@ -1,5 +1,10 @@
 {
   "name": "usage-mode",
   "version": "0.1.0",
-  "description": "Context window, 5-hour limit and weekly limit as dim labels in the prompt footer."
+  "description": "Context window, 5-hour limit and weekly limit as dim labels in the prompt footer.",
+  "repository": "https://github.com/GambetaClub/claude-mods",
+  "author": {
+    "name": "GambetaClub"
+  },
+  "license": "MIT"
 }
