@@ -1,5 +1,9 @@
 {
   "name": "model-router",
   "owner": { "name": "GambetaClub" },
-  "plugins": [{ "name": "model-router-slim", "source": "./" }]
+  "plugins": [
+    { "name": "model-router-slim", "source": "./" },
+    { "name": "usage-mode", "source": "./mods/usage-mode" },
+    { "name": "cache-tax-slim", "source": "./mods/cache-tax-slim" }
+  ]
 }

@@ -41,6 +41,20 @@ git clone https://github.com/GambetaClub/model-router .claude/skills/model-route
 
 You need Claude Code 2.1.287 or newer. On an older version, start it with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude`. Accept the trust prompt the first time you open the project.
 
+## More mods in this repo
+
+Same marketplace, same install line with a different name:
+
+| Mod | What it shows |
+|---|---|
+| `usage-mode` | `ctx`, `5h` and `week` bars under the prompt: context window and rate limits, green to red |
+| `cache-tax-slim` | `cache warm` in the footer; keeps the one-hour prompt cache warm during breaks (costs tokens). Slimmed from Karan Bansal's cache-tax, MIT |
+
+```
+/plugin install usage-mode --marketplace GambetaClub/model-router
+/plugin install cache-tax-slim --marketplace GambetaClub/model-router
+```
+
 ## Setup
 
 Add this to `~/.claude/settings.json` (user settings, not project settings):

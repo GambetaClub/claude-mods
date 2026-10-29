@@ -1,0 +1,5 @@
+{
+  "name": "usage-mode",
+  "version": "0.1.0",
+  "description": "Context window, 5-hour limit and weekly limit as dim labels in the prompt footer."
+}
