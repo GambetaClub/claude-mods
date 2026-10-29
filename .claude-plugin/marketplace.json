@@ -1,5 +1,5 @@
 {
-  "name": "model-router",
+  "name": "claude-mods",
   "owner": { "name": "GambetaClub" },
   "plugins": [
     { "name": "model-router-slim", "source": "./" },

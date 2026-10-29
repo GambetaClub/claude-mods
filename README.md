@@ -24,19 +24,19 @@ Forked from `jev-model-router` in [claude-code-templates](https://github.com/dav
 At the prompt of a Claude Code session:
 
 ```
-/plugin install model-router-slim --marketplace GambetaClub/model-router
+/plugin install model-router-slim --marketplace GambetaClub/claude-mods
 ```
 
 From a shell:
 
 ```sh
-claude plugin install model-router-slim --marketplace GambetaClub/model-router
+claude plugin install model-router-slim --marketplace GambetaClub/claude-mods
 ```
 
 Or clone it as a skills-dir mod:
 
 ```sh
-git clone https://github.com/GambetaClub/model-router .claude/skills/model-router
+git clone https://github.com/GambetaClub/claude-mods .claude/skills/model-router
 ```
 
 You need Claude Code 2.1.287 or newer. On an older version, start it with `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude`. Accept the trust prompt the first time you open the project.
@@ -51,8 +51,8 @@ Same marketplace, same install line with a different name:
 | `cache-tax-slim` | `cache warm` in the footer; keeps the one-hour prompt cache warm during breaks (costs tokens). Slimmed from Karan Bansal's cache-tax, MIT |
 
 ```
-/plugin install usage-mode --marketplace GambetaClub/model-router
-/plugin install cache-tax-slim --marketplace GambetaClub/model-router
+/plugin install usage-mode --marketplace GambetaClub/claude-mods
+/plugin install cache-tax-slim --marketplace GambetaClub/claude-mods
 ```
 
 ## Setup
