@@ -1,0 +1,5 @@
+{
+  "name": "model-router",
+  "owner": { "name": "GambetaClub" },
+  "plugins": [{ "name": "model-router-slim", "source": "./" }]
+}

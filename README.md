@@ -21,6 +21,20 @@ Forked from `jev-model-router` in [claude-code-templates](https://github.com/dav
 
 ## Install
 
+At the prompt of a Claude Code session:
+
+```
+/plugin install model-router-slim --marketplace GambetaClub/model-router
+```
+
+From a shell:
+
+```sh
+claude plugin install model-router-slim --marketplace GambetaClub/model-router
+```
+
+Or clone it as a skills-dir mod:
+
 ```sh
 git clone https://github.com/GambetaClub/model-router .claude/skills/model-router
 ```
