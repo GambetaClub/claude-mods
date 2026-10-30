@@ -56,12 +56,12 @@ Forked from `jev-model-router` in [claude-code-templates](https://github.com/dav
 
 | Tier | Model | For |
 |---|---|---|
-| `fast` | Haiku 5.5 | Small, mechanical work: read a file, rename a symbol |
-| `balanced` | Sonnet 5.5 | Everyday changes across a few files |
-| `deep` | Opus 5.5 | Design, unknown bugs, security, migrations |
-| `superDeep` | Fable 5.1 | Big refactors and features that span many files |
+| `fast` | Haiku 5.5 | Very dumb work: run one command, read a file, rename a symbol |
+| `balanced` | Sonnet 5.5 | Easy work: fetch something online, summarize, small edits |
+| `deep` | Opus 5.5 | The rest: features, debugging, refactors, routine security |
+| `superDeep` | Fable 5.1 | Hard cybersecurity, orchestrating big apps, cross-service bugs of unknown cause, large migrations and rewrites |
 
-- It sets the effort for each prompt: `low`, `medium`, `high` or `xhigh`.
+- It sets the effort for each prompt, capped by the tier: Haiku `low`, Sonnet up to `medium`, Opus and Fable up to `xhigh`. A risky task lifts the cap to `high`.
 - It picks the main model on the first turn and keeps it until `/clear` or a compaction. Switching models mid-chat would throw away the prompt cache.
 - Each subagent gets its own model. Subagents start fresh, so a different model costs nothing there.
 - When a prompt has nothing to do with the current chat, the mod holds it back and suggests a new session, with a ready-to-paste `claude --model … '<prompt>'` command. Send the prompt again to run it in the current chat.

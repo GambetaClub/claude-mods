@@ -56,15 +56,21 @@ export const TIER_ORDER: readonly Tier[] = ['fast', 'balanced', 'deep', 'superDe
  * shape of the work, not about model names: the model never sees an id.
  */
 const TIER_CRITERIA: Record<Tier, string> = {
-  fast: 'Trivially dumb: no thinking needed at all. Run one command, print or read one file, answer a one-line factual question already in context. If in doubt, it is not this tier.',
+  fast: 'Very dumb: no judgment needed. Run one command, print or read one file, rename or move something, a one-line factual answer already in context. If in doubt, it is not this tier.',
   balanced:
-    'Ordinary engineering: implement a well-specified change across a few files, write tests, fix a clearly described bug, review a small diff.',
-  deep: 'Hard or high-stakes: architecture and design, debugging a failure whose cause is unknown, security, data migrations, concurrency, anything touching production or money.',
+    'Easy and low-risk: fetch something online and report it (docs, a web page, search results), summarize or explain a text, file or diff, extract or reformat data, a small well-specified edit in one or two files, answer a how-to question.',
+  deep: 'The rest of the work: implementing or changing features, debugging, refactors, tests, code review, architecture and design, routine security, data migrations, concurrency, anything touching production or money.',
   superDeep:
-    'Large work to orchestrate: a big refactor or a feature spanning many files or modules, planned and split across several steps or subagents.',
+    'Only these kinds: hard cybersecurity (vulnerability research, exploit analysis, reverse engineering, threat modelling, adversarial review of security-critical code); orchestrating a big app or feature spanning many modules, planned and split across several steps or subagents; debugging a failure of unknown cause that spans services or involves races; a large migration or rewrite (framework swap, language port, schema change across every layer). If in doubt, it is not this tier.',
 }
 
-const EFFORT_RUBRIC = ['almost none', 'some', 'a lot', 'as much as possible'] as const
+// Anchors, not adjectives: each score names the kind of work it stands for.
+const EFFORT_RUBRIC = [
+  '0: mechanical, the answer is known before starting',
+  '1: a few steps along a familiar pattern, little to weigh up',
+  '2: several parts that must fit together, or a cause or design that has to be worked out',
+  '3: ambiguous or high-stakes, many interacting parts, a wrong answer is expensive',
+] as const
 
 export const DEFAULT_BASE_URL: Record<Provider, string> = {
   typesafe: 'https://api.typesafe.ai',
@@ -125,7 +131,7 @@ export function questions(provider: Provider, withNewTask = false): Record<strin
     },
     effort: {
       type: 'score',
-      instructions: 'How much step-by-step reasoning does this task need?',
+      instructions: 'How much step-by-step reasoning does this task need? Pick the anchor that fits best.',
       criteria: EFFORT_RUBRIC,
     },
     risky: {
@@ -246,11 +252,14 @@ function confidenceOf(answer: Record<string, unknown>): number | null {
   return values.length > 0 ? Math.max(...values) : null
 }
 
-/** The rubric score (0..3) as a level: medium by default, high from 2, xhigh from 2.75. */
+/** The highest reasoning level each tier may ask for. */
+const EFFORT_CAP: Record<Tier, Effort> = { fast: 'low', balanced: 'medium', deep: 'xhigh', superDeep: 'xhigh' }
+
+/** The rubric score (0..3) as a level: low below 0.75, medium below 1.75, high below 2.6, else xhigh. */
 export function effortLevel(score: number): Effort {
-  if (score < 0.3) return 'low'
-  if (score < 2) return 'medium'
-  return score < 2.75 ? 'high' : 'xhigh'
+  if (score < 0.75) return 'low'
+  if (score < 1.75) return 'medium'
+  return score < 2.6 ? 'high' : 'xhigh'
 }
 
 /**
@@ -401,9 +410,9 @@ export function route(
     const currentRank = effortRank(current.effort)
     let wantedRank = EFFORT_ORDER.indexOf(effortLevel(effortScore))
 
-    // High effort is for planning-heavy (deep tier or above) or sensitive (risky) work; everything else stops at medium.
-    const needsHigh = wantedTier >= TIER_ORDER.indexOf('deep') || (decision.risky ?? 0) > 0.5
-    if (!needsHigh) wantedRank = Math.min(wantedRank, EFFORT_ORDER.indexOf('medium'))
+    // Effort never outgrows the tier: haiku stops at low, sonnet at medium, opus may go up to xhigh. Risk lifts a non-opus cap to high.
+        const riskyCap = (decision.risky ?? 0) > 0.5 ? EFFORT_ORDER.indexOf('high') : 0
+    wantedRank = Math.min(wantedRank, Math.max(EFFORT_ORDER.indexOf(EFFORT_CAP[tier]), riskyCap))
 
     // Risk raises the floor; it must never lower one. Forcing only skips the
     // thresholds, so without this clamp a task already at `xhigh` or `max`

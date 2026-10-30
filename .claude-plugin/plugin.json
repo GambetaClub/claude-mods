@@ -1,6 +1,6 @@
 {
   "name": "model-router-slim",
-  "version": "0.4.3",
+  "version": "0.5.1",
   "description": "Picks the model and the reasoning effort for each task with TypeSafe's Jev, a System One decision model reached either through TypeSafe's own API or the Vercel AI Gateway. Routes subagent models at agent.spawn and the main loop's effort and model at turn.step, in both directions, falling back to the engine's built-in classifier when no key is set.",
   "author": {
     "name": "claude-code-templates",
@@ -69,25 +69,25 @@
     "fastModel": {
       "type": "string",
       "title": "Fast tier",
-      "description": "Model alias or id for mechanical, local tasks",
+      "description": "Model alias or id for very dumb tasks: one command, read a file, rename",
       "default": "haiku"
     },
     "balancedModel": {
       "type": "string",
       "title": "Balanced tier",
-      "description": "Model alias or id for ordinary engineering work",
+      "description": "Model alias or id for easy tasks: fetching online resources, summarizing, small edits",
       "default": "sonnet"
     },
     "deepModel": {
       "type": "string",
       "title": "Deep tier",
-      "description": "Model alias or id for hard or high-stakes work",
+      "description": "Model alias or id for everything else",
       "default": "opus"
     },
     "superDeepModel": {
       "type": "string",
       "title": "Super deep tier",
-      "description": "Model alias or id for orchestrating big refactors or features",
+      "description": "Model alias or id for hard cybersecurity, orchestrating big apps, cross-service unknown-cause bugs, large migrations",
       "default": "fable"
     },
     "minUpgradeConfidence": {
