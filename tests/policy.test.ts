@@ -85,7 +85,7 @@ test('effort moves in both directions too, on its own confidence', () => {
   expect(route(low, on('claude-haiku-4-5-20251001', 'high'), config).effort).toBe('low')
 
   const high = readDecision(gatewayAnswer('deep', { deep: 0.95 }, 0.01, 2.8))
-  expect(route(high, on('claude-opus-5', 'low'), config).effort).toBe('xhigh')
+  expect(route(high, on('claude-opus-5', 'low'), config).effort).toBe('medium')
 })
 
 test('a numeric effort is the caller\'s own scale and is left alone', () => {
@@ -104,11 +104,11 @@ test('the rubric score maps onto the reasoning ladder', () => {
   expect(effortLevel(99)).toBe('xhigh')
 })
 
-test('a risky task takes the deep tier and real reasoning, past both thresholds', () => {
+test('a risky task takes the superDeep tier, past both thresholds', () => {
   const decision = readDecision(gatewayAnswer('fast', { fast: 0.97, balanced: 0.02, deep: 0.01 }, 0.93))
   const routing = route(decision, on('claude-sonnet-5', 'low'), config)
-  expect(routing.model).toBe('opus')
-  expect(routing.effort).toBe('high')
+  expect(routing.model).toBe('fable')
+  expect(routing.effort).toBe('medium')
   expect(routing.reason).toContain('risk')
 })
 
@@ -123,7 +123,7 @@ test('a big refactor takes the super deep tier, and risk never pulls it back to 
 
 test('no decision, and a decision that changes nothing, both leave the request as it is', () => {
   expect(route(null, on('claude-sonnet-5'), config).model).toBeNull()
-  const same = readDecision(gatewayAnswer('balanced', { balanced: 0.9 }, 0.01, 1.4))
+  const same = readDecision(gatewayAnswer('balanced', { balanced: 0.9 }, 0.01, 1.8))
   const routing = route(same, on('sonnet', 'medium'), config)
   expect(routing.model).toBeNull()
   expect(routing.effort).toBeNull()
@@ -209,9 +209,9 @@ test('a low-confidence TypeSafe downgrade is refused, like the Gateway path', ()
   expect(route(readDecision(typesafeAnswer('fast', 0.42)), on('claude-sonnet-5'), config).model).toBeNull()
 })
 
-test('a risky TypeSafe answer forces the deep tier through the noul field', () => {
+test('a risky TypeSafe answer forces the superDeep tier through the noul field', () => {
   const decision = readDecision(typesafeAnswer('fast', 0.98, 0.88))
-  expect(route(decision, on('claude-sonnet-5'), config).model).toBe('opus')
+  expect(route(decision, on('claude-sonnet-5'), config).model).toBe('fable')
 })
 
 test('each backend gets its own endpoint, question type and model placement', () => {
@@ -257,13 +257,13 @@ test('risk raises the effort floor but never lowers one', () => {
   expect(route(decision, on('claude-opus-5', 'xhigh'), config).effort).toBeNull()
   expect(route(decision, on('claude-opus-5', 'max'), config).effort).toBeNull()
   // It still raises a session that is below the floor.
-  expect(route(decision, on('claude-opus-5', 'low'), config).effort).toBe('high')
+  expect(route(decision, on('claude-opus-5', 'low'), config).effort).toBe('medium')
 })
 
 test('max ranks above every rung the rubric can produce', () => {
   expect(effortRank('max')).toBeGreaterThan(effortRank('xhigh') as number)
   // Leaving max is a downgrade, so it needs the high bar, not the lenient one.
-  const decision = readDecision(gatewayAnswer('fast', { fast: 0.9 }, 0.01, 0))
+  const decision = readDecision(gatewayAnswer('balanced', { balanced: 0.9 }, 0.01, 0))
   const barelyConfident = { ...(decision as NonNullable<typeof decision>), effortConfidence: 0.35 }
   expect(route(barelyConfident, on('claude-sonnet-5', 'max'), config).effort).toBeNull()
 

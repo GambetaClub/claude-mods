@@ -56,12 +56,12 @@ export const TIER_ORDER: readonly Tier[] = ['fast', 'balanced', 'deep', 'superDe
  * shape of the work, not about model names: the model never sees an id.
  */
 const TIER_CRITERIA: Record<Tier, string> = {
-  fast: 'Very dumb: no judgment needed. Run one command, print or read one file, rename or move something, a one-line factual answer already in context. If in doubt, it is not this tier.',
+  fast: 'A single read-only lookup with one short answer: list one directory, grep for one string and list the files that contain it, read one file, fetch one web page, run one read-only command. Any change to a file, or a search that must report each usage with its line or context, is not this tier. If in doubt, it is not this tier.',
   balanced:
-    'Easy and low-risk: fetch something online and report it (docs, a web page, search results), summarize or explain a text, file or diff, extract or reformat data, a small well-specified edit in one or two files, answer a how-to question.',
-  deep: 'The rest of the work: implementing or changing features, debugging, refactors, tests, code review, architecture and design, routine security, data migrations, concurrency, anything touching production or money.',
+    'Scanning and very easy edits. Scanning: find every usage of something across the codebase and report each one with its line or context, browse, scrape or gather information, summarize or explain what was found. Very easy edits: replace a text, rename something used in one file, or make a small change that is fully specified in one or two files.',
+  deep: 'The rest of the work: implementing or changing features, debugging, refactors, tests, code review and verification, planning, architecture and design, orchestrating work across many modules or subagents.',
   superDeep:
-    'Only these kinds: hard cybersecurity (vulnerability research, exploit analysis, reverse engineering, threat modelling, adversarial review of security-critical code); orchestrating a big app or feature spanning many modules, planned and split across several steps or subagents; debugging a failure of unknown cause that spans services or involves races; a large migration or rewrite (framework swap, language port, schema change across every layer). If in doubt, it is not this tier.',
+    'Only very tricky, high-stakes work: security (vulnerability research, exploit analysis, threat modelling, review of security-critical code such as auth or permissions); anything that could lose or corrupt data; production migrations or changes to production data or infrastructure. If in doubt, it is not this tier.',
 }
 
 // Anchors, not adjectives: each score names the kind of work it stands for.
@@ -252,14 +252,18 @@ function confidenceOf(answer: Record<string, unknown>): number | null {
   return values.length > 0 ? Math.max(...values) : null
 }
 
-/** The highest reasoning level each tier may ask for. */
-const EFFORT_CAP: Record<Tier, Effort> = { fast: 'low', balanced: 'medium', deep: 'xhigh', superDeep: 'xhigh' }
-
 /** The rubric score (0..3) as a level: low below 0.75, medium below 1.75, high below 2.6, else xhigh. */
 export function effortLevel(score: number): Effort {
   if (score < 0.75) return 'low'
   if (score < 1.75) return 'medium'
   return score < 2.6 ? 'high' : 'xhigh'
+}
+
+/** Effort by tier (Mariano's table): haiku low, fable medium, sonnet and opus low when easy and medium otherwise. Never high. */
+export function tableEffort(tier: Tier, decision: Decision): Effort {
+  if (tier === 'fast') return 'low'
+  if (tier === 'superDeep') return 'medium'
+  return (decision.effort ?? 0) >= 1.5 || (decision.risky ?? 0) > 0.5 ? 'medium' : 'low'
 }
 
 /**
@@ -382,11 +386,11 @@ export function route(
   let effortScore = decision.effort
   let forced = false
 
-  // Carrying out something final is never worth the saving: take the deep
-  // tier and real reasoning, whatever the cheaper answer said, and skip the
+  // Carrying out something final is never worth the saving: take the
+  // superDeep tier, whatever the cheaper answer said, and skip the
   // thresholds — this is the one case that is not a confidence question.
   if (decision.risky !== null && decision.risky > 0.7) {
-    if (TIER_ORDER.indexOf(tier) < TIER_ORDER.indexOf('deep')) tier = 'deep'
+    tier = 'superDeep'
     effortScore = Math.max(effortScore ?? 0, 2)
     forced = true
   }
@@ -408,11 +412,7 @@ export function route(
   let effort: Effort | null = null
   if (effortScore !== null) {
     const currentRank = effortRank(current.effort)
-    let wantedRank = EFFORT_ORDER.indexOf(effortLevel(effortScore))
-
-    // Effort never outgrows the tier: haiku stops at low, sonnet at medium, opus may go up to xhigh. Risk lifts a non-opus cap to high.
-        const riskyCap = (decision.risky ?? 0) > 0.5 ? EFFORT_ORDER.indexOf('high') : 0
-    wantedRank = Math.min(wantedRank, Math.max(EFFORT_ORDER.indexOf(EFFORT_CAP[tier]), riskyCap))
+    let wantedRank = EFFORT_ORDER.indexOf(tableEffort(tier, { ...decision, effort: effortScore }))
 
     // Risk raises the floor; it must never lower one. Forcing only skips the
     // thresholds, so without this clamp a task already at `xhigh` or `max`
@@ -426,7 +426,7 @@ export function route(
     if (
       comparable &&
       wantedRank !== currentRank &&
-      (forced || allowed(wantedRank, currentRank, decision.effortConfidence, config))
+      (forced || ((tier === 'fast' || tier === 'superDeep') && (model !== null || currentTier === wantedTier)) || allowed(wantedRank, currentRank, decision.effortConfidence, config))
     ) {
       effort = wanted
     }

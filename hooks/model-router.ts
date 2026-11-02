@@ -23,8 +23,8 @@
  * mistakes do not cost the same, so they do not clear the same confidence bar
  * (see `minUpgradeConfidence` / `minDowngradeConfidence` in policy.ts).
  *
- * The Agent tool has no effort parameter, so a subagent's effort is not ours
- * to set; only its model is.
+ * A routed subagent's effort is set on its own requests at turn.step, keyed by
+ * the agentId its spawn returns.
  *
  * The prompt is classified at `prompt.submit`, which runs before the turn
  * starts, and the decision is applied at the turn's first request.
@@ -55,7 +55,9 @@ import {
   requestBody,
   requestHeaders,
   requestModelId,
+  rankOf,
   route,
+  tableEffort,
   TIER_ORDER,
   bareCommand,
   NEW_TASK_THRESHOLD,
@@ -135,6 +137,7 @@ export const register: Register = (on, options) => {
   let held: string | undefined
   let stopNextTurn: string[] | undefined
   let off = false
+  const subagentEfforts = new Map<string, Effort>()
   const SHORT_FOLLOW_UP = 30
   // Held by the host so a hot reload mid-chat does not read as a fresh chat and switch the model.
   const settledRef = { plugin: 'model-router-slim', key: 'settled' } as const
@@ -304,7 +307,10 @@ export const register: Register = (on, options) => {
   })
 
   on('turn.step', async function* ($, e, next) {
-    if (e.agentId) return yield* next(e)
+    if (e.agentId) {
+      const effort = subagentEfforts.get(e.agentId)
+      return yield* next(effort && e.effort !== undefined ? { ...e, effort } : e)
+    }
     const send = async function* (step: typeof e) {
       await $.state.set(sentRef, { model: step.model, effort: step.effort === undefined ? null : String(step.effort) })
       return yield* next(step)
@@ -339,8 +345,8 @@ export const register: Register = (on, options) => {
     if (routeMainEffort && routing.effort) change.effort = routing.effort
 
     const effectiveEffort = change.effort ?? e.effort
-    if ((change.model ?? e.model) === 'claude-opus-5-5' && (effectiveEffort === 'xhigh' || effectiveEffort === 'max')) {
-      change.effort = 'high'
+    if ((change.model ?? e.model).includes('opus') && (effectiveEffort === 'high' || effectiveEffort === 'xhigh' || effectiveEffort === 'max')) {
+      change.effort = 'medium'
     }
 
     appliedTurnId = e.turnId
@@ -454,14 +460,13 @@ export const register: Register = (on, options) => {
     }
 
     // The subagent inherits the parent's model, so that is what a change is measured from.
-    // The Agent tool takes no effort, so only the model is ours to set here.
     const current = e.parentModel
     const { model, reason } = route(decision, { model: current }, policy)
-    if (!model) {
-      if (logDecisions) $.ui.log(`[Jev Model Router] ${e.subagentType}: ${reason}`)
-      return next(e)
-    }
-    if (logDecisions) $.ui.log(`[Jev Model Router] ${e.subagentType} → ${model}: ${reason}`)
-    return next({ ...e, model })
+    const rank = decision && rankOf(model ?? current, policy.tiers)
+    const effort = decision && rank !== null ? tableEffort(TIER_ORDER[rank] as Tier, decision) : null
+    if (logDecisions) $.ui.log(`[Jev Model Router] ${e.subagentType} → ${model ?? 'parent model'}, effort ${effort ?? 'unchanged'}: ${reason}`)
+    const started = await next(model ? { ...e, model } : e)
+    if (effort && 'agentId' in started && started.agentId) subagentEfforts.set(started.agentId, effort)
+    return started
   })
 }
