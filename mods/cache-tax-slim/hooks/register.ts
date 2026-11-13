@@ -320,9 +320,9 @@ export const register: Register = on => {
     return result
   })
 
-  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+  on('ui.render', { component: 'SessionMode' }, async ($, e, next) => {
     const rest = await next(e)
-    if (!s.hasBand || e.props.hasSurvey) return rest
+    if (!s.hasBand) return rest
     const now = await $.clock.now()
     const state = s.stopped ? 'stopped' : !s.lastRequestAt || s.compacted ? 'unknown' : isCold(s, now) ? 'cold' : 'warm'
     const tree = await worktreeName($)
@@ -337,7 +337,7 @@ export const register: Register = on => {
         : Text({ children: [alt] })] }),
       Text({ dimColor: true, wrap: 'truncate', children: [` ${label}`] }),
     ] })
-    const own = Box({ flexDirection: 'row', gap: 3, flexGrow: 1, justifyContent: 'flex-end', children: [
+    const own = Box({ flexDirection: 'row', gap: 3, flexGrow: 1, justifyContent: 'flex-start', children: [
       ...(typeof routerOff === 'boolean' ? [icon(routerIcons[theme][routerOff ? 'off' : 'on'].png, '[jev]', routerOff ? 'router off' : ['router on', sent && shortModel(sent.model), sent?.effort].filter(Boolean).join(' · '))] : []),
       icon(statusIcons[theme][state === 'warm' || state === 'cold' ? state : 'neutral'].png, '[>]', `cache ${state}`),
       ...(tree === undefined ? [] : [icon(worktreeIcons[theme][tree === null ? 'main' : 'other'].png, '[⎇]', tree ?? 'main')]),
