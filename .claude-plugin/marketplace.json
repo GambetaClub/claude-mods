@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "model-router-slim",
-      "source": "./",
+      "source": "./mods/model-router-slim",
       "description": "Picks the model and reasoning effort for every prompt with TypeSafe's Jev."
     },
     {
