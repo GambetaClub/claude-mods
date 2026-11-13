@@ -410,6 +410,11 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'keepwarm' }, async ($, e) => {
+    const reply = await keepwarm()
+    // A mod arming keepwarm (lunch-warm) stays out of the chat.
+    return e.origin.kind === 'plugin' ? {} : reply
+
+  async function keepwarm() {
     const words = String(e.args ?? '').trim().split(/\s+/).filter(Boolean)
     const now = await $.clock.now()
     if (words[0] === 'off') {
@@ -442,6 +447,7 @@ export const register: Register = on => {
       return { text: armedText(s, now, window) }
     }
     return { text: statusText(s, now) ?? 'keepwarm is off' }
+  }
   })
 
   on('command.run', { command: 'cache-tax' }, async ($, e) => {
