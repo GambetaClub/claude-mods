@@ -338,9 +338,9 @@ export const register: Register = on => {
       Text({ dimColor: true, wrap: 'truncate', children: [` ${label}`] }),
     ] })
     const own = Box({ flexDirection: 'row', gap: 3, flexGrow: 1, justifyContent: 'flex-start', children: [
-      ...(typeof routerOff === 'boolean' ? [icon(routerIcons[theme][routerOff ? 'off' : 'on'].png, '[jev]', routerOff ? 'router off' : ['router on', sent && shortModel(sent.model), sent?.effort].filter(Boolean).join(' · '))] : []),
-      icon(statusIcons[theme][state === 'warm' || state === 'cold' ? state : 'neutral'].png, '[>]', `cache ${state}`),
-      ...(tree === undefined ? [] : [icon(worktreeIcons[theme][tree === null ? 'main' : 'other'].png, '[⎇]', tree ?? 'main')]),
+      ...(typeof routerOff === 'boolean' ? [icon(routerIcons[theme][routerOff ? 'off' : 'on'].png, '', routerOff ? 'router off' : ['router on', sent && shortModel(sent.model), sent?.effort].filter(Boolean).join(' · '))] : []),
+      icon(statusIcons[theme][state === 'warm' || state === 'cold' ? state : 'neutral'].png, state === 'warm' ? '' : state === 'cold' ? '' : '', `cache ${state}`),
+      ...(tree === undefined ? [] : [icon(worktreeIcons[theme][tree === null ? 'main' : 'other'].png, '', tree ?? 'main')]),
     ] })
     return rest ? Box({ flexDirection: 'row', gap: 3, children: [own, rest] }) : own
   })
