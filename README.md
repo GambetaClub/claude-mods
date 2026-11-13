@@ -120,11 +120,11 @@ With a key set, your prompt goes to TypeSafe or Vercel, along with up to five ea
 ### Tests
 
 ```sh
-claude plugin test .
-node eval/eval.ts
+claude plugin test mods/model-router-slim
+node mods/model-router-slim/eval/eval.ts
 ```
 
-`eval/eval.ts` checks the first-prompt pick and the no-switch rule: real Jev calls through the hook, plus an audit of your past sessions. It needs Node 22.6 or newer.
+`mods/model-router-slim/eval/eval.ts` checks the first-prompt pick and the no-switch rule: real Jev calls through the hook, plus an audit of your past sessions. It needs Node 22.6 or newer.
 
 ## usage-mode
 
@@ -153,8 +153,7 @@ If the original hook form (`cache-tax@claude-code-hooks`) is also installed, a c
 
 ```
 .claude-plugin/marketplace.json   the marketplace: lists the three mods
-.claude-plugin/plugin.json        model-router-slim (this folder is the mod)
-hooks/  eval/  tests/  types/     model-router-slim
+mods/model-router-slim/           model-router-slim (criteria in hooks/criteria.ts)
 mods/usage-mode/                  usage-mode
 mods/cache-tax-slim/              cache-tax-slim
 ```

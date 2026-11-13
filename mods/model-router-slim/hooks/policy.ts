@@ -18,6 +18,7 @@
  * The Gateway shape is not documented publicly; it was read from
  * @ai-sdk/gateway and @ai-sdk/provider.
  */
+import { MODEL_CRITERIA } from './criteria.ts'
 
 export type Provider = 'typesafe' | 'gateway'
 
@@ -55,14 +56,9 @@ export const TIER_ORDER: readonly Tier[] = ['fast', 'balanced', 'deep', 'superDe
  * How each tier is described to the decision model. Deliberately about the
  * shape of the work, not about model names: the model never sees an id.
  */
-const TIER_CRITERIA: Record<Tier, string> = {
-  fast: 'A single read-only lookup with one short answer: list one directory, grep for one string and list the files that contain it, read one file, fetch one web page, run one read-only command. Any change to a file, or a search that must report each usage with its line or context, is not this tier. If in doubt, it is not this tier.',
-  balanced:
-    'Scanning and very easy edits. Scanning: find every usage of something across the codebase and report each one with its line or context, browse, scrape or gather information, summarize or explain what was found. Very easy edits: replace a text, rename something used in one file, or make a small change that is fully specified in one or two files.',
-  deep: 'The rest of the work: implementing or changing features, debugging, refactors, tests, code review and verification, planning, architecture and design, orchestrating work across many modules or subagents.',
-  superDeep:
-    'Only very tricky, high-stakes work: security (vulnerability research, exploit analysis, threat modelling, review of security-critical code such as auth or permissions); anything that could lose or corrupt data; production migrations or changes to production data or infrastructure. If in doubt, it is not this tier.',
-}
+const TIER_CRITERIA = Object.fromEntries(
+  TIER_ORDER.map(tier => [tier, MODEL_CRITERIA[tier].when]),
+) as Record<Tier, string>
 
 // Anchors, not adjectives: each score names the kind of work it stands for.
 const EFFORT_RUBRIC = [
@@ -259,11 +255,10 @@ export function effortLevel(score: number): Effort {
   return score < 2.6 ? 'high' : 'xhigh'
 }
 
-/** Effort by tier (Mariano's table): haiku low, fable medium, sonnet and opus low when easy and medium otherwise. Never high. */
+/** Effort by tier, from criteria.ts. */
 export function tableEffort(tier: Tier, decision: Decision): Effort {
-  if (tier === 'fast') return 'low'
-  if (tier === 'superDeep') return 'medium'
-  return (decision.effort ?? 0) >= 1.5 || (decision.risky ?? 0) > 0.5 ? 'medium' : 'low'
+  const hard = (decision.effort ?? 0) >= 1.5 || (decision.risky ?? 0) > 0.5
+  return MODEL_CRITERIA[tier].effort[hard ? 'hard' : 'easy']
 }
 
 /**
@@ -312,7 +307,7 @@ const ALIAS_IDS: Record<string, string> = {
   haiku: 'claude-haiku-5-5',
   sonnet: 'claude-sonnet-5-5',
   opus: 'claude-opus-5-5',
-  fable: 'claude-fable-5-1',
+  fable: 'claude-fable-5-2',
 }
 
 /**
