@@ -115,10 +115,10 @@ test('a risky task takes the superDeep tier, past both thresholds', () => {
 test('a big refactor takes the super deep tier, and risk never pulls it back to deep', () => {
   const big = readDecision(gatewayAnswer('superDeep', { superDeep: 0.8 }))
   expect(route(big, on('claude-opus-5'), config).model).toBe('fable')
-  expect(requestModelId('fable')).toBe('claude-fable-5-1')
+  expect(requestModelId('fable')).toBe('claude-fable-5-2')
 
   const risky = readDecision(gatewayAnswer('fast', { fast: 0.97 }, 0.93))
-  expect(route(risky, on('claude-fable-5-1'), config).model).toBeNull()
+  expect(route(risky, on('claude-fable-5-2'), config).model).toBeNull()
 })
 
 test('no decision, and a decision that changes nothing, both leave the request as it is', () => {
@@ -194,7 +194,7 @@ test('a new task is asked only with earlier prompts, read back, and quoted for t
   expect(readDecision(JSON.stringify(answer))?.newTask).toBe(0.93)
 
   const advice = newSessionAdvice("fix the user's login", 'superDeep', 'fable')
-  expect(advice[2]).toContain(`claude --model claude-fable-5-1 'fix the user'\\''s login'`)
+  expect(advice[2]).toContain(`claude --model claude-fable-5-2 'fix the user'\\''s login'`)
 })
 
 test('a TypeSafe answer is read from its own confidence and noul fields', () => {

@@ -64,6 +64,7 @@ import {
   newSessionAdvice,
 } from './policy.ts'
 import type { Decision, Effort, PolicyConfig, Provider, Tier } from './policy.ts'
+import { MODEL_CRITERIA } from './criteria.ts'
 
 export const register: Register = (on, options) => {
   const text = (key: string, fallback: string) =>
@@ -108,10 +109,10 @@ export const register: Register = (on, options) => {
 
   const policy: PolicyConfig = {
     tiers: {
-      fast: text('fastModel', 'haiku'),
-      balanced: text('balancedModel', 'sonnet'),
-      deep: text('deepModel', 'opus'),
-      superDeep: text('superDeepModel', 'fable'),
+      fast: text('fastModel', MODEL_CRITERIA.fast.model),
+      balanced: text('balancedModel', MODEL_CRITERIA.balanced.model),
+      deep: text('deepModel', MODEL_CRITERIA.deep.model),
+      superDeep: text('superDeepModel', MODEL_CRITERIA.superDeep.model),
     },
     minUpgradeConfidence: number('minUpgradeConfidence', 0.3),
     minDowngradeConfidence: number('minDowngradeConfidence', 0.6),

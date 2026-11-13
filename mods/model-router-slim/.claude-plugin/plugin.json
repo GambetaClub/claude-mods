@@ -1,6 +1,6 @@
 {
   "name": "model-router-slim",
-  "version": "0.5.5",
+  "version": "0.5.7",
   "description": "Picks the model and the reasoning effort for each task with TypeSafe's Jev, a System One decision model reached either through TypeSafe's own API or the Vercel AI Gateway. Routes subagent models at agent.spawn and the main loop's effort and model at turn.step, in both directions, falling back to the engine's built-in classifier when no key is set.",
   "author": {
     "name": "claude-code-templates",
@@ -69,26 +69,26 @@
     "fastModel": {
       "type": "string",
       "title": "Fast tier",
-      "description": "Model alias or id for very dumb tasks: one command, read a file, rename",
-      "default": "haiku"
+      "description": "Model alias or id for the fast tier; empty uses hooks/criteria.ts",
+      "default": ""
     },
     "balancedModel": {
       "type": "string",
       "title": "Balanced tier",
-      "description": "Model alias or id for easy tasks: fetching online resources, summarizing, small edits",
-      "default": "sonnet"
+      "description": "Model alias or id for the balanced tier; empty uses hooks/criteria.ts",
+      "default": ""
     },
     "deepModel": {
       "type": "string",
       "title": "Deep tier",
-      "description": "Model alias or id for everything else",
-      "default": "opus"
+      "description": "Model alias or id for the deep tier; empty uses hooks/criteria.ts",
+      "default": ""
     },
     "superDeepModel": {
       "type": "string",
       "title": "Super deep tier",
-      "description": "Model alias or id for hard cybersecurity, orchestrating big apps, cross-service unknown-cause bugs, large migrations",
-      "default": "fable"
+      "description": "Model alias or id for the superDeep tier; empty uses hooks/criteria.ts",
+      "default": ""
     },
     "minUpgradeConfidence": {
       "type": "number",
