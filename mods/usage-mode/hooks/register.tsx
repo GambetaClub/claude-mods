@@ -90,9 +90,13 @@ export function register(on: On) {
   on('ui.render', { component: 'SessionMode' }, async ($, e, next) => {
     if (cells.length === 0) return next(e)
     const { Box, Text } = await $.ui.resolve(e)
+    // Modes are drawn here; hooks beneath still add their part.
+    const beneath = await next({ ...e, props: { ...e.props, modes: [] } })
 
     return (
       <Box>
+        {beneath}
+        <Box flexShrink={0}>
         {e.props.modes.map(mode => (
           <Text dimColor>{`${mode} & `}</Text>
         ))}
@@ -129,6 +133,7 @@ export function register(on: On) {
             </Box>
           )
         })}
+        </Box>
       </Box>
     )
   })
