@@ -331,6 +331,8 @@ export interface PolicyConfig {
    * by too small a model or too little thought, so the bar is high.
    */
   minDowngradeConfidence: number
+  /** The bar for leaving the superDeep model; lower, so a session opened on it is not kept there by an unsure answer. */
+  minSuperDeepDowngradeConfidence: number
 }
 
 export interface Routing {
@@ -408,7 +410,10 @@ export function route(
     // Risk raises the model floor too; forcing never pulls superDeep down to deep.
     (forced
       ? currentTier === null || wantedTier > currentTier
-      : allowed(wantedTier, currentTier, decision.confidence, config))
+      : allowed(wantedTier, currentTier, decision.confidence,
+          currentTier === TIER_ORDER.indexOf('superDeep')
+            ? { ...config, minDowngradeConfidence: config.minSuperDeepDowngradeConfidence }
+            : config))
       ? wantedModel
       : null
 
