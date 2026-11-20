@@ -56,6 +56,7 @@ import {
   requestHeaders,
   requestModelId,
   rankOf,
+  effortRank,
   route,
   tableEffort,
   TIER_ORDER,
@@ -309,8 +310,14 @@ export const register: Register = (on, options) => {
 
   on('turn.step', async function* ($, e, next) {
     if (e.agentId) {
-      const effort = subagentEfforts.get(e.agentId)
-      return yield* next(effort && e.effort !== undefined ? { ...e, effort } : e)
+      const effort = subagentEfforts.get(e.agentId) ?? e.effort
+      const rank = effortRank(effort)
+      if (e.model.toLowerCase().includes('opus') && rank !== null && rank > 1) {
+        return yield* next({ ...e, effort: 'medium' })
+      }
+      return yield* next(effort !== undefined && effort !== e.effort && e.effort !== undefined
+        ? { ...e, effort }
+        : e)
     }
     const send = async function* (step: typeof e) {
       await $.state.set(sentRef, { model: step.model, effort: step.effort === undefined ? null : String(step.effort) })

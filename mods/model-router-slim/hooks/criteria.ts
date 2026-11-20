@@ -9,12 +9,12 @@ export const MODEL_CRITERIA = {
   balanced: {
     model: 'sonnet',
     effort: { easy: 'low', hard: 'medium' },
-    when: 'Well-scoped work where what done looks like fits in one sentence and speed matters: fix a bug that has a clear reproduction, upgrade one package and fix its tests, a small change fully specified in a few files, replace a text or rename something, drive a browser through known flows. Also scanning: find every usage of something across the codebase and report each one with its line or context, browse, scrape or gather information, summarize what was found.',
+    when: 'Well-scoped work where what done looks like fits in one sentence and speed matters: fix a bug that has a clear reproduction, upgrade one package and fix its tests, a small change fully specified in a few files, replace a text or rename something, drive a browser through known flows, run scripted database checks, or verify a scoped review fix. Also scanning: find every usage of something across the codebase and report each one with its line or context, browse, scrape or gather information, summarize what was found.',
   },
   deep: {
     model: 'opus',
     effort: { easy: 'medium', hard: 'medium' },
-    when: 'The default for complex coding and knowledge work: a feature that touches several layers (data model, API, UI), debugging without a clear reproduction, refactors, tests, code review and verification, planning, design, writing UI, orchestrating work across many modules or subagents.',
+    when: 'The default for complex coding and knowledge work: a feature that touches several layers (data model, API, UI), debugging without a clear reproduction, refactors, review requiring judgment about architecture or data integrity, planning, design, writing UI, orchestrating work across many modules or subagents.',
   },
   superDeep: {
     model: 'fable',
