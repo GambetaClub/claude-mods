@@ -117,6 +117,7 @@ export const register: Register = (on, options) => {
     },
     minUpgradeConfidence: number('minUpgradeConfidence', 0.3),
     minDowngradeConfidence: number('minDowngradeConfidence', 0.6),
+    minSuperDeepDowngradeConfidence: number('minSuperDeepDowngradeConfidence', 0.3),
   }
 
   // The classification waiting for the turn that reads its prompt, and what

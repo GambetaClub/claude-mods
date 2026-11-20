@@ -11,7 +11,7 @@ Forked from `jev-model-router` in [claude-code-templates](https://github.com/dav
 | `fast` | Haiku 5.5 | One lookup, or summarize / classify a short text |
 | `balanced` | Sonnet 5.5 | Well-scoped work ("done" fits in one sentence, e.g. a bug with a clear repro), scanning |
 | `deep` | Opus 5.5 | The default: multi-layer features, debugging, refactors, review, orchestration |
-| `superDeep` | Fable 5.2 | Ambitious open-ended work (new architecture, framework migration), security, data loss, production migrations |
+| `superDeep` | Fable 5.2 | Ambitious open-ended work (new architecture, framework migration), security, data loss, destructive migrations (additive ones go to `deep`) |
 
 - The tiers, their models and their effort live in `hooks/criteria.ts`. Skills that spawn agents read the same file, so edit it there and nowhere else.
 - It sets the effort for each prompt and each subagent: Haiku `low`, Sonnet `low` when easy and `medium` otherwise, Opus and Fable `medium`. Never `high`.
@@ -69,6 +69,7 @@ jq -r 'select(.type=="assistant") | .message.model' ~/.claude/projects/<project>
 | `routeMainEffort` | `true` | Pick the main chat's effort |
 | `routeSubagentModel` | `true` | Pick each subagent's model |
 | `minUpgradeConfidence` / `minDowngradeConfidence` | `0.3` / `0.6` | How sure Jev must be to move up or down |
+| `minSuperDeepDowngradeConfidence` | `0.3` | How sure Jev must be to move down from Fable, so a session opened on Fable does not stay there |
 | `timeoutMs` | `800` | Wait limit per classification; `2000` avoids timeouts on the first call |
 | `logDecisions` | `true` | Show the log lines above |
 

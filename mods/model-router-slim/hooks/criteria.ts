@@ -14,19 +14,19 @@ export const MODEL_CRITERIA = {
   deep: {
     model: 'opus',
     effort: { easy: 'medium', hard: 'medium' },
-    when: 'The default for complex coding and knowledge work: a feature that touches several layers (data model, API, UI), debugging without a clear reproduction, refactors, review requiring judgment about architecture or data integrity, planning, design, writing UI, orchestrating work across many modules or subagents.',
+    when: 'The default for complex coding and knowledge work: a feature that touches several layers (data model, API, UI), debugging without a clear reproduction, refactors, a purely additive migration (a nullable column, a new table, an index), review requiring judgment about architecture or data integrity, planning, design, writing UI, orchestrating work across many modules or subagents.',
   },
   superDeep: {
     model: 'fable',
     effort: { easy: 'medium', hard: 'medium' },
-    when: 'Only for the orchestrator itself (the session that plans the work and reviews what comes back), never for a subagent it spawns. Ambitious or high-stakes work where judgment and accuracy are paramount: a large, loosely defined, open-ended goal across the whole codebase with many milestones and undocumented decisions (a new architecture, a framework major-version migration); security (vulnerability research, exploit analysis, threat modelling, review of auth or permissions code); anything that could lose or corrupt data; production migrations or changes to production data or infrastructure. If in doubt, it is not this tier.',
+    when: 'Only for the orchestrator itself (the session that plans the work and reviews what comes back), never for a subagent it spawns. Ambitious or high-stakes work where judgment and accuracy are paramount: a large, loosely defined, open-ended goal across the whole codebase with many milestones and undocumented decisions (a new architecture, a framework major-version migration); security (vulnerability research, exploit analysis, threat modelling, review of auth or permissions code); anything that could lose or corrupt data, including a destructive migration (drop or rename a column or table, add NOT NULL, a backfill or data migration); changes to production data or infrastructure. A purely additive migration (a nullable column, a new table, an index) is not this tier, however it ships. If in doubt, it is not this tier.',
   },
 } as const
 
 export const MODEL_RULES = [
   'Pass both `model` and `effort` on every Agent call you pick for; omit both only to let the router decide.',
   'In doubt between two tiers, take the cheaper one, except for superDeep subjects.',
-  'A spawned subagent carrying out work an orchestrator already planned gets Opus (deep) at most, superDeep subjects included (data loss, production migrations, security): the orchestrator reviews its work. Fable is for the orchestrator itself, when it plans such work.',
+  'A spawned subagent carrying out work an orchestrator already planned gets Opus (deep) at most, superDeep subjects included (data loss, destructive migrations, security): the orchestrator reviews its work. Fable is for the orchestrator itself, when it plans such work.',
   'A lead on a big job (Fable or Opus) hands its well-scoped parts to Sonnet subagents.',
   'If a result falls short, raise effort before changing model, but never set Opus to `high` or above.',
   'Never let a subagent inherit Fable by accident. Forks always inherit.',
